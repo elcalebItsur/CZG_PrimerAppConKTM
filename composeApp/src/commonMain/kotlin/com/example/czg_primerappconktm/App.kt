@@ -35,11 +35,11 @@ fun App() {
         Column(
             modifier = Modifier
                 .safeContentPadding()
-                .fillMaxSize(),
+                .fillMaxSize()
         ) {
             Text(timeAtLocation)
             TextField(value = location, onValueChange = { location = it })
-            Button(onClick = { timeAtLocation = "13:30" }) {
+            Button(onClick = { timeAtLocation = currentTimeAt(location) ?: "Invalid Location" }) {
                 Text("Show Time At Location")
             }
         }
