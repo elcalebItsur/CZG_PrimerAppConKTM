@@ -1,21 +1,21 @@
 package com.example.czg_primerappconktm
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
@@ -26,105 +26,86 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.painterResource
 
 import czg_primerappconktm.composeapp.generated.resources.Res
-import czg_primerappconktm.composeapp.generated.resources.compose_multiplatform
-import kotlinx.datetime.IllegalTimeZoneException
-import kotlinx.datetime.LocalTime
+import czg_primerappconktm.composeapp.generated.resources.jp
+import czg_primerappconktm.composeapp.generated.resources.mx
+import czg_primerappconktm.composeapp.generated.resources.eg
+import czg_primerappconktm.composeapp.generated.resources.fr
+import czg_primerappconktm.composeapp.generated.resources.id
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.DrawableResource
 import kotlin.time.Clock
+import kotlinx.datetime.LocalTime
 
-@Composable
-@Preview
-fun App() {
-    MaterialTheme {
-        var location by remember { mutableStateOf("Europe/Paris") }
-        var timeAtLocation by remember { mutableStateOf("No location selected") }
-
-        Column(
-            modifier = Modifier
-                .safeContentPadding()
-                .fillMaxSize()
-        ) {
-            Text(timeAtLocation)
-            TextField(value = location, onValueChange = { location = it })
-            Button(onClick = { timeAtLocation = currentTimeAt(location) ?: "Invalid Location" }) {
-                Text("Show Time At Location")
-            }
-        }
-    }
-}
-
-fun currentTimeAt(location: String): String? {
-    fun LocalTime.formatted() = "$hour:$minute:$second"
-
-    return try {
-        val time = Clock.System.now()
-        val zone = TimeZone.of(location)
-        val localTime = time.toLocalDateTime(zone).time
-        "The time in $location is ${localTime.formatted()}"
-    } catch (ex: IllegalTimeZoneException) {
-        null
-    }
-}
-
-data class Country(val name: String, val zone: TimeZone)
+data class Country(val name: String, val zone: TimeZone, val image: DrawableResource)
 
 fun currentTimeAt(location: String, zone: TimeZone): String {
-    fun LocalTime.formatted() = "$hour:$minute:$second"
+    fun LocalTime.formatted() = "${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:${second.toString().padStart(2, '0')}"
 
     val time = Clock.System.now()
     val localTime = time.toLocalDateTime(zone).time
 
-    return "The time in $location is ${localTime.formatted()}"
+    return "La hora en $location es ${localTime.formatted()}"
 }
 
-fun countries() = listOf(
-    Country("Japan", TimeZone.of("Asia/Tokyo")),
-    Country("France", TimeZone.of("Europe/Paris")),
-    Country("Mexico", TimeZone.of("America/Mexico_City")),
-    Country("Indonesia", TimeZone.of("Asia/Jakarta")),
-    Country("Egypt", TimeZone.of("Africa/Cairo")),
+val defaultCountries = listOf(
+    Country("Japón", TimeZone.of("Asia/Tokyo"), Res.drawable.jp),
+    Country("Francia", TimeZone.of("Europe/Paris"), Res.drawable.fr),
+    Country("México", TimeZone.of("America/Mexico_City"), Res.drawable.mx),
+    Country("Indonesia", TimeZone.of("Asia/Jakarta"), Res.drawable.id),
+    Country("Egipto", TimeZone.of("Africa/Cairo"), Res.drawable.eg)
 )
 
 @Composable
 @Preview
-fun App(countries: List<Country> = countries()) {
+fun App(countries: List<Country> = defaultCountries) {
     MaterialTheme {
         var showCountries by remember { mutableStateOf(false) }
-        var timeAtLocation by remember { mutableStateOf("No location selected") }
+        var timeAtLocation by remember { mutableStateOf("Ninguna ubicación seleccionada") }
 
         Column(
             modifier = Modifier
                 .padding(20.dp)
                 .safeContentPadding()
                 .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 timeAtLocation,
                 style = TextStyle(fontSize = 20.sp),
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally)
+                modifier = Modifier.fillMaxWidth()
             )
-            Row(modifier = Modifier.padding(start = 20.dp, top = 10.dp)) {
-                DropdownMenu(
-                    expanded = showCountries,
-                    onDismissRequest = { showCountries = false }
-                ) {
-                    countries().forEach { (name, zone) ->
-                        DropdownMenuItem(
-                            text = {   Text(name)},
-                            onClick = {
-                                timeAtLocation = currentTimeAt(name, zone)
-                                showCountries = false
-                            }
-                        )
-                    }
-                }
+
+            Button(
+                modifier = Modifier.padding(top = 20.dp),
+                onClick = { showCountries = !showCountries }
+            ) {
+                Text("Seleccionar Ubicación")
             }
 
-            Button(modifier = Modifier.padding(start = 20.dp, top = 10.dp),
-                onClick = { showCountries = !showCountries }) {
-                Text("Select Location")
+            DropdownMenu(
+                expanded = showCountries,
+                onDismissRequest = { showCountries = false }
+            ) {
+                countries.forEach { (name, zone, image) ->
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Image(
+                                    painterResource(image),
+                                    modifier = Modifier.size(30.dp).padding(end = 10.dp),
+                                    contentDescription = "Bandera de $name"
+                                )
+                                Text(name)
+                            }
+                        },
+                        onClick = {
+                            timeAtLocation = currentTimeAt(name, zone)
+                            showCountries = false
+                        }
+                    )
+                }
             }
         }
     }
